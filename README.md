@@ -28,7 +28,7 @@ vswitch use personal   # done. instant switch.
 Download the script to a directory in your `PATH`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/vswitch/main/vswitch -o ~/.local/bin/vswitch
+curl -fsSL https://raw.githubusercontent.com/alabiemmanuel177/vswitch/main/vswitch -o ~/.local/bin/vswitch
 chmod +x ~/.local/bin/vswitch
 ```
 
