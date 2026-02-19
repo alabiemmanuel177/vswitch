@@ -1,7 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERCEL_DIR="$HOME/Library/Application Support/com.vercel.cli"
+# Detect platform and set Vercel auth path
+case "$(uname -s)" in
+    Darwin)
+        VERCEL_DIR="$HOME/Library/Application Support/com.vercel.cli"
+        ;;
+    Linux)
+        if [ -n "${XDG_CONFIG_HOME:-}" ]; then
+            VERCEL_DIR="$XDG_CONFIG_HOME/com.vercel.cli"
+        else
+            VERCEL_DIR="$HOME/.config/com.vercel.cli"
+        fi
+        ;;
+    MINGW*|MSYS*|CYGWIN*)
+        VERCEL_DIR="$APPDATA/com.vercel.cli"
+        ;;
+    *)
+        echo "Unsupported platform: $(uname -s)"
+        exit 1
+        ;;
+esac
+
 AUTH_FILE="$VERCEL_DIR/auth.json"
 PROFILES_DIR="$HOME/.vercel-profiles"
 

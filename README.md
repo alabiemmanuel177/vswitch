@@ -2,6 +2,8 @@
 
 A fast CLI tool to switch between multiple Vercel accounts without the hassle of logging in and out.
 
+Works on **macOS**, **Linux**, and **Windows**.
+
 ## The Problem
 
 If you manage multiple Vercel accounts (personal projects, work, clients), the only way to switch between them is:
@@ -23,7 +25,7 @@ vswitch use personal   # done. instant switch.
 
 ## Installation
 
-### Quick Install (macOS)
+### macOS / Linux
 
 Download the script to a directory in your `PATH`:
 
@@ -38,22 +40,51 @@ Make sure `~/.local/bin` is in your `PATH`. Add this to your `~/.zshrc` or `~/.b
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
+### Windows (PowerShell)
+
+1. Download `vswitch.ps1`:
+
+```powershell
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/alabiemmanuel177/vswitch/main/vswitch.ps1" -OutFile "$HOME\vswitch.ps1"
+```
+
+2. Create a wrapper so you can call `vswitch` directly. Add this function to your PowerShell profile (`$PROFILE`):
+
+```powershell
+function vswitch { & "$HOME\vswitch.ps1" @args }
+```
+
+Or to install system-wide, place `vswitch.ps1` in a directory in your `PATH` and create a batch wrapper:
+
+```bat
+:: Save as vswitch.cmd somewhere in your PATH
+@echo off
+powershell -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\vswitch.ps1" %*
+```
+
+> **Note:** You may need to allow script execution: `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`
+
 ### Manual Install
 
 1. Clone or download this repository
-2. Copy the `vswitch` script to somewhere in your `PATH`:
+2. Copy the appropriate script to somewhere in your `PATH`:
 
 ```bash
+# macOS / Linux
 cp vswitch ~/.local/bin/vswitch
 chmod +x ~/.local/bin/vswitch
 ```
 
+```powershell
+# Windows
+Copy-Item vswitch.ps1 "$HOME\vswitch.ps1"
+```
+
 ### Requirements
 
-- macOS (uses `~/Library/Application Support/com.vercel.cli/` for auth storage)
-- [Vercel CLI](https://vercel.com/docs/cli) installed
-- Python 3 (pre-installed on macOS, used for JSON parsing)
-- Bash 4+
+- [Vercel CLI](https://vercel.com/docs/cli) installed and accessible as `vercel`
+- **macOS / Linux:** Bash 4+, Python 3 (used for JSON parsing)
+- **Windows:** PowerShell 5.1+
 
 ## Quick Start
 
@@ -204,11 +235,13 @@ Shows usage information and examples.
 
 ## How It Works
 
-Vercel CLI stores its authentication in:
+Vercel CLI stores its authentication in a platform-specific directory:
 
-```
-~/Library/Application Support/com.vercel.cli/auth.json
-```
+| Platform | Auth file path |
+|---|---|
+| macOS | `~/Library/Application Support/com.vercel.cli/auth.json` |
+| Linux | `~/.config/com.vercel.cli/auth.json` (or `$XDG_CONFIG_HOME`) |
+| Windows | `%APPDATA%\com.vercel.cli\auth.json` |
 
 This file contains your API token, refresh token, and expiry timestamp. `vswitch` works by:
 
@@ -221,10 +254,12 @@ That's the entire mechanism. No daemon, no background process, no config server.
 
 | Path | Purpose |
 |---|---|
-| `~/.local/bin/vswitch` | The CLI script |
-| `~/.vercel-profiles/` | Saved profile directory |
+| `~/.local/bin/vswitch` | The CLI script (macOS/Linux) |
+| `$HOME\vswitch.ps1` | The CLI script (Windows) |
+| `~/.vercel-profiles/` | Saved profile directory (all platforms) |
 | `~/.vercel-profiles/<name>.json` | Individual profile auth data |
-| `~/Library/Application Support/com.vercel.cli/auth.json` | Vercel CLI's active auth (managed by Vercel) |
+
+On Windows, the profiles directory is `%USERPROFILE%\.vercel-profiles\`.
 
 ## Typical Workflow
 
@@ -252,7 +287,7 @@ vercel deploy
 
 ## Security Notes
 
-- Profile files in `~/.vercel-profiles/` contain **auth tokens**. They are created with user-only read/write permissions (`600`), matching Vercel's own `auth.json` permissions.
+- Profile files in `~/.vercel-profiles/` contain **auth tokens**. They are created with user-only read/write permissions, matching Vercel's own `auth.json` permissions.
 - Tokens are stored exactly as Vercel CLI stores them - no additional encryption is added. If you're comfortable with how Vercel CLI handles auth, `vswitch` doesn't change that security model.
 - `vswitch remove` deletes the local profile file but does **not** revoke the token on Vercel's servers. To fully revoke access, use the Vercel dashboard.
 - Never commit the `~/.vercel-profiles/` directory to version control.
@@ -261,7 +296,7 @@ vercel deploy
 
 ### `command not found: vswitch`
 
-Make sure `~/.local/bin` is in your PATH:
+**macOS / Linux** - Make sure `~/.local/bin` is in your PATH:
 
 ```bash
 echo $PATH | tr ':' '\n' | grep .local/bin
@@ -274,6 +309,8 @@ export PATH="$HOME/.local/bin:$PATH"
 ```
 
 Then restart your terminal or run `source ~/.zshrc`.
+
+**Windows** - Make sure the PowerShell function or batch wrapper is set up. See [Windows installation](#windows-powershell).
 
 ### `Error: No Vercel auth found`
 
@@ -289,9 +326,17 @@ vercel login
 vswitch save old-profile    # overwrites with fresh token
 ```
 
-### Wrong platform
+### Windows: script execution is disabled
 
-Currently `vswitch` is built for **macOS** where Vercel CLI stores auth in `~/Library/Application Support/com.vercel.cli/`. For Linux, the path would need to be updated to `~/.local/share/com.vercel.cli/` or equivalent XDG path.
+If you see a script execution policy error, run:
+
+```powershell
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+## Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request.
 
 ## License
 
